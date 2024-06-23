@@ -1,6 +1,6 @@
 defmodule TLVEncoder do
   @moduledoc false
-  use Bitwise
+  import Bitwise
 
   @compile {:inline, encode_tag: 1}
 

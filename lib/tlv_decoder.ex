@@ -3,7 +3,7 @@ defmodule TLVDecoder do
 
   @compile {:inline, accumulate_tag: 2, is_constructed_tag: 1}
 
-  use Bitwise
+  import Bitwise
 
   def decode(tlv) do
     with {tag, constructed, lv} <- decode_tag(tlv),
