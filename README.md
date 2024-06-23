@@ -7,7 +7,7 @@ bytes, length encoded on multiple bytes, indefinite length and both primitive an
 Add tlv to your list of dependencies in `mix.exs`:
 ```elixir
 def deps do
-  [{:tlv, "~> 0.0.1"}]
+  [{:tlv, "~> 0.2.0"}]
 end
 ```
 ## Examples
