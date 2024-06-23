@@ -10,7 +10,7 @@ defmodule TLV do
   a list of TLVs. The `indefinite_length` field is set by the decoder to reflect the original byte representation and
   also serves as instruction to the encoder on how to encode the length.
   """
-  @type t :: %TLV{tag: integer, value: binary | [TLV.t], indefinite_length: boolean}
+  @type t :: %TLV{tag: integer, value: binary | [TLV.t()], indefinite_length: boolean}
   defstruct [:tag, :value, indefinite_length: false]
 
   @doc """
@@ -36,7 +36,7 @@ defmodule TLV do
       iex> TLV.decode(<<0x80, 0x02, 0x00>>)
       :no_tlv
   """
-  @spec decode(binary) :: {TLV.t, binary} | :no_tlv
+  @spec decode(binary) :: {TLV.t(), binary} | :no_tlv
   defdelegate decode(tlv), to: TLVDecoder
 
   @doc """
@@ -57,6 +57,6 @@ defmodule TLV do
       iex> TLV.encode(%TLV{tag: 0xE0, value: [%TLV{tag: 0x80, value: <<0xAA>>}]})
       <<0xE0, 0x03, 0x80, 0x01, 0xAA>>
   """
-  @spec encode(TLV.t) :: binary
+  @spec encode(TLV.t()) :: binary
   defdelegate encode(tlv), to: TLVEncoder
 end

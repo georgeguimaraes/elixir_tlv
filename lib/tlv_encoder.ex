@@ -13,15 +13,17 @@ defmodule TLVEncoder do
   defp encode_lv(_indefinite_length, value) when is_binary(value) do
     encode_length(value) <> value
   end
+
   defp encode_lv(true, tlvs) when is_list(tlvs) do
     <<0x80>> <> encode_tlvs(tlvs) <> <<0x00, 0x00>>
   end
+
   defp encode_lv(false, tlvs) when is_list(tlvs) do
     encode_lv(false, encode_tlvs(tlvs))
   end
 
   defp encode_tlvs(tlvs) do
-    Enum.reduce(tlvs, <<>>, fn(tlv, acc) -> acc <> encode(tlv) end)
+    Enum.reduce(tlvs, <<>>, fn tlv, acc -> acc <> encode(tlv) end)
   end
 
   defp encode_length(value) do

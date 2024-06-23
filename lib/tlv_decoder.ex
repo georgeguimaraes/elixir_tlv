@@ -12,36 +12,48 @@ defmodule TLVDecoder do
          do: {%TLV{tag: tag, value: value, indefinite_length: len == :indefinite}, rest}
   end
 
-  defp decode_tag(<<tag::unsigned-big-integer-size(8), rest::binary>>) when (tag &&& 0x1F) != 0x1F do
+  defp decode_tag(<<tag::unsigned-big-integer-size(8), rest::binary>>)
+       when (tag &&& 0x1F) != 0x1F do
     {tag, is_constructed_tag(tag), rest}
   end
+
   defp decode_tag(<<tag::unsigned-big-integer-size(8), rest::binary>>) do
     decode_tag_number(tag, is_constructed_tag(tag), rest)
   end
+
   defp decode_tag(_binary), do: :no_tlv
 
-  defp decode_tag_number(acc, constructed, <<tag::unsigned-big-integer-size(8), rest::binary>>) when (tag &&& 0x80) == 0x80 do
+  defp decode_tag_number(acc, constructed, <<tag::unsigned-big-integer-size(8), rest::binary>>)
+       when (tag &&& 0x80) == 0x80 do
     acc |> accumulate_tag(tag) |> decode_tag_number(constructed, rest)
   end
+
   defp decode_tag_number(acc, constructed, <<tag::unsigned-big-integer-size(8), rest::binary>>) do
     {accumulate_tag(acc, tag), constructed, rest}
   end
+
   defp decode_tag_number(_acc, _constructed, _binary), do: :no_tlv
 
-  defp accumulate_tag(acc, tag), do: ((acc <<< 8) ||| tag)
+  defp accumulate_tag(acc, tag), do: acc <<< 8 ||| tag
   defp is_constructed_tag(tag), do: (tag &&& 0x20) == 0x20
 
-  defp decode_length(true, <<len::unsigned-big-integer-size(8), rest::binary>>) when len == 0x80 do
+  defp decode_length(true, <<len::unsigned-big-integer-size(8), rest::binary>>)
+       when len == 0x80 do
     {:indefinite, rest}
   end
-  defp decode_length(false, <<len::unsigned-big-integer-size(8), _rest::binary>>) when len == 0x80 do
+
+  defp decode_length(false, <<len::unsigned-big-integer-size(8), _rest::binary>>)
+       when len == 0x80 do
     :no_tlv
   end
-  defp decode_length(_constructed, <<len::unsigned-big-integer-size(8), rest::binary>>) when len <= 0x7F do
+
+  defp decode_length(_constructed, <<len::unsigned-big-integer-size(8), rest::binary>>)
+       when len <= 0x7F do
     {len, rest}
   end
+
   defp decode_length(_constructed, <<len_of_len::unsigned-big-integer-size(8), lv::binary>>) do
-    len_of_len = (len_of_len &&& 0x7F)
+    len_of_len = len_of_len &&& 0x7F
 
     if byte_size(lv) >= len_of_len do
       <<len::unsigned-big-integer-size(len_of_len)-unit(8), rest::binary>> = lv
@@ -50,6 +62,7 @@ defmodule TLVDecoder do
       :no_tlv
     end
   end
+
   defp decode_length(_constructed, _binary), do: :no_tlv
 
   defp decode_value(false, len, v) do
@@ -60,9 +73,11 @@ defmodule TLVDecoder do
       :no_tlv
     end
   end
+
   defp decode_value(true, :indefinite, v) do
     decode_inner_tlvs([], true, v)
   end
+
   defp decode_value(true, len, v) do
     {inner_tlvs, rest} = decode_value(false, len, v)
     {decode_inner_tlvs([], false, inner_tlvs), rest}
@@ -70,6 +85,7 @@ defmodule TLVDecoder do
 
   defp decode_inner_tlvs(acc, true, <<0x00, 0x00, rest::binary>>), do: {Enum.reverse(acc), rest}
   defp decode_inner_tlvs(acc, false, ""), do: Enum.reverse(acc)
+
   defp decode_inner_tlvs(acc, indefinite, data) do
     case decode(data) do
       :no_tlv -> :no_tlv
